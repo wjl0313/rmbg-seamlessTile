@@ -1,0 +1,8 @@
+# 核心依赖
+Pillow>=10.0.0
+numpy>=1.24.0
+transformers>=4.35.0
+huggingface-hub>=0.19.0
+
+# 网格拆分功能依赖
+opencv-python>=4.8.0
