@@ -1,5 +1,6 @@
 import argparse
 import os
+import json
 from pathlib import Path
 from typing import Tuple, Optional, List
 
@@ -202,6 +203,28 @@ def save_rgba_with_alpha(original_path: str, mask: np.ndarray, out_path: str) ->
 	Image.merge('RGBA', (r, g, b, alpha)).save(out_path)
 
 
+def load_config(config_file="config.json"):
+	"""从config.json文件加载配置"""
+	if not os.path.exists(config_file):
+		print(f"警告：配置文件 {config_file} 不存在，将使用命令行参数")
+		return None
+	
+	try:
+		with open(config_file, 'r', encoding='utf-8') as f:
+			config = json.load(f)
+		return config
+	except Exception as e:
+		print(f"读取配置文件失败: {e}")
+		return None
+
+
+def get_config_value(config, section, key, default_value):
+	"""从配置中获取值，如果不存在则返回默认值"""
+	if config and section in config and key in config[section]:
+		return config[section][key]
+	return default_value
+
+
 def collect_images(input_path: str) -> List[str]:
 	p = Path(input_path)
 	if p.is_file():
@@ -220,8 +243,9 @@ def ensure_dir(path: str) -> None:
 
 def parse_args() -> argparse.Namespace:
 	parser = argparse.ArgumentParser(description="RMBG2.0 本地推理脚本")
-	parser.add_argument("--input", required=True, help="输入图片路径或文件夹")
-	parser.add_argument("--output", required=False, default="outputs", help="输出目录或文件路径（单图时可为文件路径）")
+	parser.add_argument("--input", required=False, help="输入图片路径或文件夹（如果不提供，将从config.json读取）")
+	parser.add_argument("--output", required=False, help="输出目录或文件路径（如果不提供，将从config.json读取）")
+	parser.add_argument("--config", default="config.json", help="配置文件路径")
 	parser.add_argument("--model", default="official", choices=["official", "demo"], 
 						help="模型类型：official=官方RMBG-2.0（推荐），demo=简单演示模型")
 	parser.add_argument("--weights", required=False, default=None, 
@@ -247,6 +271,34 @@ def main() -> None:
 	device = select_device(args.device)
 	print(f"[信息] 使用设备: {device}")
 
+	# 加载配置文件
+	config = load_config(args.config)
+	
+	# 确定输入和输出路径
+	input_path = args.input
+	output_path = args.output
+	
+	if not input_path and config:
+		input_path = get_config_value(config, "图片去背景", "INPUT_PATH", "input/test.png")
+		print(f"[信息] 从配置文件读取输入路径: {input_path}")
+	
+	if not output_path and config:
+		output_path = get_config_value(config, "图片去背景", "OUTPUT_PATH", "output/rmbg_output")
+		print(f"[信息] 从配置文件读取输出路径: {output_path}")
+	
+	if not input_path:
+		raise RuntimeError("请提供输入路径参数或确保config.json中包含INPUT_PATH配置")
+	
+	if not output_path:
+		output_path = "output/rmbg_output"
+		print(f"[信息] 使用默认输出路径: {output_path}")
+	
+	# 从配置文件读取SAVE_BOTH参数
+	save_both = get_config_value(config, "图片去背景", "SAVE_BOTH", True)
+	if save_both and not args.save_mask and not args.both:
+		args.both = True
+		print(f"[信息] 从配置文件读取SAVE_BOTH: {save_both}，将同时保存掩码和透明图")
+
 	# 加载模型
 	if args.model == "official":
 		model = load_official_model(device)
@@ -255,13 +307,13 @@ def main() -> None:
 		model = load_demo_model(args.weights, device)
 		infer_fn = infer_single_image_demo
 
-	image_paths = collect_images(args.input)
+	image_paths = collect_images(input_path)
 	if len(image_paths) == 0:
 		raise RuntimeError("未在输入路径下找到任何图像文件")
 
 	# 判断输出是目录还是单一文件
-	output_path = Path(args.output)
-	save_as_single_file = Path(args.input).is_file() and (output_path.suffix.lower() in [".png", ".jpg", ".jpeg", ".bmp", ".webp"])
+	output_path = Path(output_path)
+	save_as_single_file = Path(input_path).is_file() and (output_path.suffix.lower() in [".png", ".jpg", ".jpeg", ".bmp", ".webp"])
 
 	if save_as_single_file:
 		ensure_dir(str(output_path.parent))

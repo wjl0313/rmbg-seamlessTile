@@ -6,7 +6,7 @@ setlocal enabledelayedexpansion
 call .\venv\Scripts\activate
 
 :: 设置固定的 Hugging Face token
-set "HF_TOKEN="
+set "HF_TOKEN=填写huggingface的token"
 
 :: 设置环境变量
 setx HUGGING_FACE_HUB_TOKEN "%HF_TOKEN%"

@@ -1,0 +1,14 @@
+{
+  "图片去背景": {
+    "INPUT_PATH": "input/test.png",
+    "OUTPUT_PATH": "output/rmbg_output",
+    "SAVE_BOTH": true,
+    "INPUT_SIZE": 1024
+  },
+  "4图合并提取元素": {
+    "RGBA_PATH": "output/rmbg_output/rgba.png",
+    "MASK_PATH": "output/rmbg_output/mask.png",
+    "OUTPUT_DIR": "output/merged_output",
+    "MIN_AREA": 1
+  }
+}
