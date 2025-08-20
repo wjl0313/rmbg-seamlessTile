@@ -1,8 +1,25 @@
-# 核心依赖
-Pillow>=10.0.0
-numpy>=1.24.0
-transformers>=4.35.0
-huggingface-hub>=0.19.0
+# 图片去背景项目依赖包
+# 本项目需要NVIDIA GPU支持，无法在CPU环境下运行
 
-# 网格拆分功能依赖
-opencv-python>=4.8.0
+# 核心图像处理依赖
+Pillow>=10.0.0,<11.0.0
+numpy>=1.24.0,<2.0.0
+opencv-python>=4.8.0,<5.0.0
+
+# 深度学习框架依赖 (GPU版本)
+torch>=2.0.0,<3.0.0
+torchvision>=0.15.0,<1.0.0
+
+# 模型和转换器依赖
+transformers>=4.35.0,<5.0.0
+huggingface-hub>=0.19.0,<1.0.0
+timm>=0.9.0,<1.0.0
+
+# 图像处理增强库
+kornia>=0.6.0,<1.0.0
+
+# 安装说明：
+# 1. 确保系统有NVIDIA GPU
+# 2. 运行: pip install -r requirements.txt
+# 3. 如果遇到CUDA问题，先安装GPU版本PyTorch:
+#    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
